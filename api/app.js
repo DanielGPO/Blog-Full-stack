@@ -1,20 +1,115 @@
-const express = require('express')
-const mongoose = require('mongoose')
-const cors = require('cors')
-const User = require('./models/user')
-const app = express()
+const express = require('express');
+const mongoose = require('mongoose');
+const fs = require('fs');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const User = require('./models/user');
+const Post = require('./models/post')
+const app = express();
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+const multer = require('multer');
+const uploadMiddleware = multer({ dest: 'uploads/' });
 
-app.use(cors())
+const salt = bcrypt.genSaltSync(10)
+const secret = 'davaojf0rnif20nfw0e2123ddasd21'
+
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }))
+app.use(cookieParser())
 app.use(express.json())
+app.use('/uploads', express.static(__dirname + '/uploads'));
+
 
 mongoose.connect('mongodb+srv://DanielGPO7:XTtUXAGTL7wmonhx@cluster0.t04u7wg.mongodb.net/?retryWrites=true&w=majority')
 
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
-   const userDoc = await User.create({username, password})
-    res.json(userDoc)
+    try {
+        const userDoc = await User.create({
+            username,
+            password:bcrypt.hashSync(password, salt)
+        })
+        res.json(userDoc)
+    } catch (e) {
+        res.status(400).json(e)
+    }
     
 });
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    const userDoc = await User.findOne({ username });
+    const passOk = bcrypt.compareSync(password, userDoc.password);
+    if (passOk) {
+        // user logado
+        jwt.sign({ username, id: userDoc._id }, secret, {}, (err, token) => {
+            if (err) throw err;
+            res.cookie('token', token).json({
+                id: userDoc.id,
+                username,
+            })
+        });
+
+    } else {
+        res.status(400).json('usuário ou senha incorretos')
+    }
+})
+
+app.get('/profile', (req,res) => {
+  const {token} = req.cookies;
+  jwt.verify(token, secret, {}, (err,info) => {
+    if (err) throw err;
+    res.json(info);
+  });
+});
+
+app.post('loggout', (req, res) => {
+    res.cookie('token', '').json('ok')
+})
+
+
+app.post('/post', uploadMiddleware.single('file'), async (req, res) => {
+    const {originalname, path } = req.file;
+    const parts = originalname.split('.');
+    const ext = parts[parts.length - 1];
+    const newPath = path + '.' + ext;
+    fs.renameSync(path, newPath);
+    
+    const {token} = req.cookies;
+      jwt.verify(token, secret, {}, async(err,info) => {
+          if (err) throw err;
+          
+          const { title, summary, content } = req.body;
+          const postDoc = await Post.create({
+              title,
+              summary,
+              content,
+              cover: newPath,
+              author: info.id,
+          });
+
+          res.json(postDoc)
+  });
+
+
+});
+
+
+app.get('/post', async (req, res) => {
+    res.json(
+           await Post.find()
+      .populate('author', ['username'])
+      .sort({createdAt: -1})
+      .limit(20)
+  );
+})
+
+
+
+app.get('/post/:id', async (req, res) => {
+  const {id} = req.params;
+  const postDoc = await Post.findById(id).populate('author', ['username']);
+  res.json(postDoc);
+})
 
 app.listen(4000)
 

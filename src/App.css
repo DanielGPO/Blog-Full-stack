@@ -23,6 +23,14 @@ header a{
   text-decoration: none;
   color: inherit;
 }
+nav {
+  display: flex;
+  align-items: center;
+}
+nav a{
+  width: 140px;
+  display: flex;
+}
 .logo{
   font-weight: bold;
   font-size: 1.5rem;
@@ -88,6 +96,6 @@ button{
   border-radius: 5px;
   padding: 7px 0;
 }
-form h1{
+form.login h1, form.register h1{
   text-align: center;
 }
