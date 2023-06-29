@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
+import { useContext, useEffect, useState } from "react"
+import { Link, useParams } from "react-router-dom"
+import { UserContext } from '../UserContext'
 
 
 function PostPage() {
     const {id} = useParams()
     const [postInfo, setPostInfo] = useState(null)
+    const {userInfo} = useContext(UserContext)
     useEffect(() => {
         fetch(`http://localhost:4000/post/${id}`)
             .then(response => {
@@ -18,11 +20,17 @@ function PostPage() {
 
   return (
       <div className="post-page">
+      <h1>{postInfo.title}</h1>
+      {userInfo.id === postInfo.author._id && (
+        <div className="editRom">
+          <Link className="edit" to={`/edit/${postInfo._id}`}>Editar este post</Link>
+        </div>
+      )}
           <div className="image">
-        <img src={`http://localhost:4000/${postInfo.cover}`} alt="" />      
+        <img className="postPage-img" src={`http://localhost:4000/${postInfo.cover}`} alt="" />      
           </div>
-          <h1>{postInfo.title}</h1>
-          <div dangerouslySetInnerHTML={{__html:postInfo.content}} />
+      <div className="author">By @{postInfo.author.username}</div>
+          <div className="content" dangerouslySetInnerHTML={{__html:postInfo.content}} />
     </div>
   )
 }

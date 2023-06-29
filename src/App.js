@@ -8,6 +8,7 @@ import Register from './components/Register';
 import { UserConextProvider } from './UserContext';
 import PostPage from './pages/PostPage';
 import CreatePost from './pages/CreatePost';
+import EditPost from './pages/EditPost';
 function App() {
   return (
     <UserConextProvider>
@@ -20,6 +21,7 @@ function App() {
       <Route path='/create' element={<CreatePost />} />
 
         <Route path='/post/:id' element={<PostPage/>} />
+        <Route path='/edit/:id' element={<EditPost/>} />
         
     </Routes>
       </UserConextProvider>

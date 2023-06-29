@@ -53,7 +53,7 @@ function CreatePost() {
                 <ReactQuill value={content}
                     onChange={newValue => setConentet(newValue)}
                 />
-          <button style={{marginTOp: '5px'}}>Criar Post</button>
+          <button className='but' style={{marginTOp: '5px'}}>Criar Post</button>
       </form>
       </>
   )
